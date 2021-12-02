@@ -1,0 +1,45 @@
+wait()
+local Tool = script.Parent
+local Mode = "Narrow"
+local Event = script.Parent.RemoteEvent
+
+function onButton1Down(mouse)
+	Event:FireServer("Start")
+	script.Parent.FireLoop.Disabled = false
+end
+
+function onButton1Up(mouse)
+	Event:FireServer("End")
+	script.Parent.FireLoop.Disabled = true
+end
+
+function onUnequipped()
+	Event:FireServer("Closed")
+	Event:FireServer("End")
+
+end
+
+function onEquipped(mouse)
+	mouse.Button1Down:connect(function() onButton1Down(mouse) end)
+	mouse.Button1Up:connect(function() onButton1Up(mouse) end)
+end
+
+Tool.Equipped:connect(onEquipped)
+Tool.Unequipped:connect(onUnequipped)
+
+
+
+--function onKeyPress(inputObject, gameProcessedEvent)
+--	if not gameProcessedEvent then
+--		if inputObject.KeyCode == Enum.KeyCode.E then
+--			if Mode == "Narrow" then
+--				Tool.RemoteEvent:FireServer(nil, "Narrow")
+--				Mode = "Fog"
+--			else
+--				Tool.RemoteEvent:FireServer(nil, "Fog")
+--				Mode = "Narrow"
+--			end
+--		end
+--	end
+--end
+--game:GetService("UserInputService").InputEnded:connect(onKeyPress)
