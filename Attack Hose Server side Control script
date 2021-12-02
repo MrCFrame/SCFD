@@ -1,0 +1,84 @@
+wait(1)
+
+
+script.Parent.RemoteEvent.OnServerEvent:connect(function(player, status, cframe)
+	if script.Parent:FindFirstChild("Vehicle") then
+	local	Vehicle = script.Parent.Vehicle.Value
+	local 	water = Vehicle.WaterUsed
+	local	level = Vehicle.TankLevel.Value
+	
+
+	if status == "End" then
+	script.Parent.Handle.Sound:Stop()
+		script.Parent.Nozzle.Water.Enabled = false
+		script.Parent.Nozzle.Foam.Enabled = false
+	end
+	
+	if status == "Closed" then	
+		local	hose = script.Parent.DischargeConnector.Value.Name
+		local	event = script.Parent.DischargeEvent.Value
+		task.wait()
+		event:Fire(hose, script.Parent)
+		script.Parent.Discharge:Destroy()
+		script.Parent.DischargeEvent:Destroy()
+		script.Parent.Vehicle:Destroy()
+	end
+	
+	if status == "Start" then
+		local ty = Vehicle.Type.Value	
+		if ty == "Water" then
+			if script.Parent.Connected.Value == true and script.Parent.Discharge.Value.Value == true and level >= 0 then
+				script.Parent.Handle.Sound:Play()
+				script.Parent.Handle.Sound.PlaybackSpeed = 0.8
+				script.Parent.Nozzle.Water.Enabled = true
+			end
+		elseif ty == "Foam" then
+			if script.Parent.Connected.Value == true and script.Parent.Discharge.Value.Value == true and level >= 0 then
+				script.Parent.Handle.Sound:Play()
+				script.Parent.Handle.Sound.PlaybackSpeed = 0.8
+				script.Parent.Nozzle.Foam.Enabled = true
+			end
+		end
+	end
+		
+	if status == "Fire" then
+		local missile = Instance.new("Part")
+		missile.Name = "Water"
+		missile.formFactor = 0
+		missile.Size = Vector3.new(1,1,1)
+		missile.CanCollide = false
+		missile.Transparency = 1
+		local waterscript = script.Parent.WaterScript:clone()
+		waterscript.Disabled = false
+		waterscript.Parent = missile
+		local thrust = script.Parent.BodyThrust:clone()
+		thrust.Parent = missile
+		missile.CFrame = cframe
+		missile.Parent = game.Workspace
+		missile:SetNetworkOwner(player)
+		spawn(function()
+			wait(0.7) missile:Destroy()
+		end)
+	end
+	
+	
+	end
+end)
+
+while true do
+	if script.Parent.Nozzle:FindFirstChild("Water") then
+		if script.Parent.Nozzle.Water.Enabled == true or script.Parent.Nozzle.Foam.Enabled == true then
+			local Vehicle = script.Parent.Vehicle.Value
+			local water = Vehicle.WaterUsed
+			local level = Vehicle.TankLevel.Value
+		task.wait(1)
+		water:Fire(2)
+		if level <= 0 then
+			script.Parent.Handle.Sound:Stop()
+			script.Parent.Nozzle.Water.Enabled = false
+			script.Parent.Nozzle.Foam.Enabled = false
+			end
+		end
+		task.wait(1)
+	end
+end
