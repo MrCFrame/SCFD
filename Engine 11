@@ -1,0 +1,321 @@
+wait(1)
+local PumpOn = false
+
+local GuageDecals = {"rbxassetid://804101102", "rbxassetid://804010938", "rbxassetid://804010947", "rbxassetid://804010945"}
+local OffDecal = "rbxassetid://832334683"
+local TankMax = 750
+local Intake1 = false
+local Intake2 = false
+local Filling = false
+local UseIntake1 = false
+local UseIntake2 = false
+
+
+--Update Level:
+local LevelDebounce = false
+script.Parent.TankLevel.Changed:Connect(function()
+	if LevelDebounce == false and PumpOn then
+		LevelDebounce = true
+		local tanklevel = (tonumber(script.Parent.TankLevel.Value) / TankMax) * 100
+		for i,child in pairs(script.Parent:GetChildren()) do
+			if child.Name == "LevelDisplay" then
+				child.SurfaceGui.TextLabel.Text = (math.floor(tanklevel)).."%" 
+				if tanklevel > 75 then child.SurfaceGui["100"].Visible = true else child.SurfaceGui["100"].Visible = false end
+				if tanklevel > 50 then child.SurfaceGui["75"].Visible = true else child.SurfaceGui["75"].Visible = false end
+				if tanklevel > 25 then child.SurfaceGui["50"].Visible = true else child.SurfaceGui["50"].Visible = false end
+				if tanklevel > 0 then child.SurfaceGui["25"].Visible = true else child.SurfaceGui["25"].Visible = false end
+			end
+		end
+		wait(1)
+		LevelDebounce = false
+	end
+end)
+
+--Water used:
+script.Parent.WaterUsed.Event:Connect(function(amount)
+	if Intake1 == true  then
+		
+	elseif Intake2 == true  then
+		
+	else
+		if script.Parent.TankLevel.Value >= 0 then
+			script.Parent.TankLevel.Value = script.Parent.TankLevel.Value - amount
+		end
+		if script.Parent.TankLevel.Value <= 0 then
+			script.Parent.TankLevel.Value = 0
+		end
+	end
+end)
+
+--Fill tank:
+local FillTank = function(sXhandle)
+	if Filling == false then
+		Filling = true
+		sXhandle.Transparency = 1
+		sXhandle.SurfaceGui.Enabled = false
+		sXhandle.Pulled.Transparency = 0
+		sXhandle.Pulled.SurfaceGui.Enabled = true
+		local charged = false
+		while (Intake1 or Intake2) and charged == false and PumpOn == true and Filling == true and tonumber(script.Parent.TankLevel.Value) < TankMax do
+			print"filling"
+			script.Parent.TankLevel.Value = script.Parent.TankLevel.Value + 1
+			wait(1)
+		end
+	elseif Filling == true then
+		Filling = false
+		sXhandle.Transparency = 0
+		sXhandle.SurfaceGui.Enabled = true
+		sXhandle.Pulled.Transparency = 1
+		sXhandle.Pulled.SurfaceGui.Enabled = false
+	end
+end
+script.Parent.FillHandle.ClickDetector.MouseClick:Connect(function(player)
+	if player:IsInGroup(2805393) then
+		FillTank(script.Parent.FillHandle)
+	end
+end)
+
+--Foam on/off:
+script.Parent.FoamClick.ClickDetector.MouseClick:Connect(function(player)
+	if player:IsInGroup(2805393) then
+		if PumpOn and script.Parent.Type.Value == "Water" then
+			script.Parent.Type.Value = "Foam"
+			script.Parent.FoamLight.BrickColor = BrickColor.new("Lime green")
+			script.Parent.FoamLight.Material = "Neon"
+			script.Parent.FoamLight.Transparency = 0
+			local random = GuageDecals[math.random(1,#GuageDecals)]
+			script.Parent.FoamGuage1.Decal.Texture = random
+			script.Parent.FoamGuage2.Decal.Texture = random
+		elseif  PumpOn and script.Parent.Type.Value == "Foam" then
+			script.Parent.Type.Value = "Water"
+			script.Parent.FoamLight.Material = "SmoothPlastic"
+			script.Parent.FoamLight.Transparency = 0.5
+			script.Parent.FoamLight.BrickColor = BrickColor.new("Fossil")
+			script.Parent.FoamGuage1.Decal.Texture = OffDecal
+			script.Parent.FoamGuage2.Decal.Texture = OffDecal
+		end
+	end
+end)
+
+--Pump on/off
+script.Parent.PumpLever.ClickDetector.MouseClick:Connect(function(player)
+	if player:IsInGroup(2805393) then
+		if  PumpOn == false then 
+			PumpOn = true 
+			script.Parent.PumpOn.Value = true
+			script.Parent.PumpLever.Transparency = 1
+			script.Parent.PumpLever.Pulled.Transparency = 0
+			local random = GuageDecals[math.random(1,#GuageDecals)]
+			script.Parent.PumpGuage1.Decal.Texture = random
+			script.Parent.PumpGuage2.Decal.Texture = random
+			script.Parent.TankLevel.Value = script.Parent.TankLevel.Value + 0.01
+			script.Parent.Parent.PumpBase.Sound:Play()
+		elseif PumpOn == true and script.Parent.Discharge1.Value == false and script.Parent.Discharge2.Value == false and script.Parent.Discharge3.Value == false and script.Parent.Discharge4.Value == false and script.Parent.Discharge5.Value == false and script.Parent.Discharge6.Value == false and script.Parent.Discharge7.Value == false then
+			PumpOn = false 
+			script.Parent.PumpOn.Value = false
+			script.Parent.PumpLever.Transparency = 0
+			script.Parent.PumpLever.Pulled.Transparency = 1
+			script.Parent.PumpGuage1.Decal.Texture = OffDecal
+			script.Parent.PumpGuage2.Decal.Texture = OffDecal
+			for i,child in pairs(script.Parent:GetChildren()) do
+				if child.Name == "LevelDisplay" then
+					child.SurfaceGui.TextLabel.Text = ""
+					child.SurfaceGui["100"].Visible = false
+					child.SurfaceGui["75"].Visible = false
+					child.SurfaceGui["50"].Visible = false
+					child.SurfaceGui["25"].Visible = false
+				end
+			end
+			script.Parent.Parent.PumpBase.Sound:Stop()
+			--Foam off:
+			script.Parent.Type.Value = "Water"
+			script.Parent.FoamLight.Material = "SmoothPlastic"
+			script.Parent.FoamLight.Transparency = 0.5
+			script.Parent.FoamLight.BrickColor = BrickColor.new("Fossil")
+			script.Parent.FoamGuage1.Decal.Texture = OffDecal
+			script.Parent.FoamGuage2.Decal.Texture = OffDecal
+		end
+	end
+end)
+
+--Charge:
+local Charge = function(player, dXhandle, dXguage, dXhose, dischargeX)
+	if player:IsInGroup(2805393) then
+		if PumpOn == true and script.Parent[dischargeX].Value == false and not Filling then
+			script.Parent[dischargeX].Value = true
+			script.Parent[dXhandle].Transparency = 1
+			script.Parent[dXhandle].Pulled.Transparency = 0
+			script.Parent[dXguage].Decal.Texture = GuageDecals[math.random(1,#GuageDecals)]
+			if script.Parent[dXhandle].Pulled:FindFirstChild("SurfaceGui") then
+				script.Parent[dXhandle].SurfaceGui.Enabled = false
+				script.Parent[dXhandle].Pulled.SurfaceGui.Enabled = true
+			end
+		elseif script.Parent[dischargeX].Value == true then
+			script.Parent[dischargeX].Value = false
+			script.Parent[dXhandle].Transparency = 0
+			script.Parent[dXhandle].Pulled.Transparency = 1
+			script.Parent[dXguage].Decal.Texture = OffDecal
+			if script.Parent[dXhandle].Pulled:FindFirstChild("SurfaceGui") then
+				script.Parent[dXhandle].SurfaceGui.Enabled = true
+				script.Parent[dXhandle].Pulled.SurfaceGui.Enabled = false
+			end
+		end
+	end
+end
+
+
+
+--Connect hose:
+local Connect = function(player, dXhandle, dXguage, dXhose, dX, color, tool, dischargeX)
+	if player:IsInGroup(2805393) then
+		if script.Parent[dX].DischargeEvent.Occupied.Value == false then
+			repeat task.wait() until tool.Parent ~= player.Backpack
+			for i,part in pairs(script.Parent[dXhose]:GetChildren()) do
+				part.Transparency = 0
+				if part.Name == "Hose" then part.Color = color end
+			end
+			local ho = script.Parent[dXhose].Hose
+			local x = tool.Hose2.Parent.Attachment
+			ho.Tool.Value = x
+			ho.Script.Disabled = false
+			
+			script.Parent[dX].DischargeEvent.Occupied.Value = true
+			local val = Instance.new("ObjectValue", tool)
+			val.Name = "DischargeEvent"
+			val.Value = script.Parent.DisconnectEvent
+			
+			
+			local val2 = Instance.new("ObjectValue", tool)
+			val2.Name = "Discharge"
+			val2.Value = dischargeX
+			
+			local val3 = Instance.new("ObjectValue", tool)
+			val3.Name = "Vehicle"
+			val3.Value = script.Parent
+			
+			tool.DischargeConnector.Value = script.Parent[dX]
+			tool.Connected.Value = true
+			
+
+		end
+	end
+end
+--Disconnect hose:
+local Disconnect = function(dX, tool)
+	local dXhose = (dX.."Hose")
+	local ho = script.Parent[dXhose].Hose
+	wait()
+	for i,part in pairs(script.Parent[dXhose]:GetChildren()) do
+		part.Transparency = 1
+	end
+
+	ho.Script.Disabled = true
+	ho.Line:Destroy()
+	ho.Tool.Value = nil
+	
+	tool.Connected.Value = false
+	script.Parent[dX].DischargeEvent.Occupied.Value = false
+end
+
+--Charge/pull handle:
+script.Parent.D1Handle.ClickDetector.MouseClick:Connect(function(player)
+	Charge(player,"D1Handle", "D1Guage", "D1Hose", "Discharge1")
+end)
+script.Parent.D2Handle.ClickDetector.MouseClick:Connect(function(player)
+	Charge(player,"D2Handle", "D2Guage", "D2Hose", "Discharge2")
+end)
+script.Parent.D3Handle.ClickDetector.MouseClick:Connect(function(player)
+	Charge(player,"D3Handle", "D3Guage", "D3Hose", "Discharge3")
+end)
+script.Parent.D4Handle.ClickDetector.MouseClick:Connect(function(player)
+	Charge(player,"D4Handle", "D4Guage", "D4Hose", "Discharge4")
+end)
+script.Parent.D5Handle.ClickDetector.MouseClick:Connect(function(player)
+	Charge(player,"D5Handle", "D5Guage", "D5Hose", "Discharge5")
+end)
+script.Parent.D6Handle.ClickDetector.MouseClick:Connect(function(player)
+	Charge(player,"D6Handle", "D6Guage", "D6Hose", "Discharge6")
+end)
+
+
+--Link Hose with Port
+script.Parent.D1.ClickDetector.MouseClick:Connect(function(player)
+	player.Backpack:WaitForChild('2 1/2" Attack Hose')
+	script.Parent.D1.DischargeEvent:Fire(player, player.Backpack['2 1/2" Attack Hose'].Hose2.BrickColor.Color, player.Backpack['2 1/2" Attack Hose'])
+end)
+script.Parent.D2.ClickDetector.MouseClick:Connect(function(player)
+	player.Backpack:WaitForChild('2 1/2" Attack Hose')
+	script.Parent.D2.DischargeEvent:Fire(player, player.Backpack['2 1/2" Attack Hose'].Hose2.BrickColor.Color, player.Backpack['2 1/2" Attack Hose'])
+end)
+script.Parent.D3.ClickDetector.MouseClick:Connect(function(player)
+	player.Backpack:WaitForChild('2 1/2" Attack Hose')
+	script.Parent.D3.DischargeEvent:Fire(player, player.Backpack['2 1/2" Attack Hose'].Hose2.BrickColor.Color, player.Backpack['2 1/2" Attack Hose'])
+end)
+script.Parent.D4.ClickDetector.MouseClick:Connect(function(player)
+	player.Backpack:WaitForChild('2 1/2" Attack Hose')
+	script.Parent.D4.DischargeEvent:Fire(player, player.Backpack['2 1/2" Attack Hose'].Hose2.BrickColor.Color, player.Backpack['2 1/2" Attack Hose'])
+end)
+script.Parent.D5.ClickDetector.MouseClick:Connect(function(player)
+	player.Backpack:WaitForChild('2 1/2" Attack Hose')
+	script.Parent.D5.DischargeEvent:Fire(player, player.Backpack['2 1/2" Attack Hose'].Hose2.BrickColor.Color, player.Backpack['2 1/2" Attack Hose'])
+end)
+
+--Click connector:
+script.Parent.D1.DischargeEvent.Event:Connect(function(player, color, tool)
+	Connect(player,"D1Handle", "D1Guage", "D1Hose", "D1", color, tool, script.Parent.Discharge1)
+end)
+script.Parent.D2.DischargeEvent.Event:Connect(function(player, color, tool)
+	Connect(player,"D2Handle", "D2Guage", "D2Hose", "D2", color, tool, script.Parent.Discharge2)
+end)
+script.Parent.D3.DischargeEvent.Event:Connect(function(player, color, tool)
+	Connect(player,"D3Handle", "D3Guage", "D3Hose", "D3", color, tool, script.Parent.Discharge3)
+end) 
+script.Parent.D4.DischargeEvent.Event:Connect(function(player, color, tool)
+	Connect(player,"D4Handle", "D4Guage", "D4Hose", "D4", color, tool, script.Parent.Discharge4)
+end)
+script.Parent.D5.DischargeEvent.Event:Connect(function(player, color, tool)
+	Connect(player,"D5Handle", "D5Guage", "D5Hose", "D5", color, tool, script.Parent.Discharge5)
+end)
+
+
+--Player disconnects:
+script.Parent.DisconnectEvent.Event:Connect(function(dX, tool)
+	Disconnect(dX, tool) 
+end)
+
+
+
+--Supply Events:
+script.Parent.S1Intake.Occupied.Changed:Connect(function(action)
+	local handle = script.Parent.S1Handle
+	if action == true then
+		handle.Transparency = 1
+		handle.SurfaceGui.Enabled = false
+		handle.Pulled.Transparency = 0
+		handle.Pulled.SurfaceGui.Enabled = true
+		Intake1 = true
+	else
+		handle.Transparency = 0
+		handle.SurfaceGui.Enabled = true
+		handle.Pulled.Transparency = 1
+		handle.Pulled.SurfaceGui.Enabled = false
+		Intake1 = false
+	end
+end)
+script.Parent.S2Intake.Occupied.Changed:Connect(function(action)
+	local handle = script.Parent.S2Handle
+	if action == true then
+		handle.Transparency = 1
+		handle.SurfaceGui.Enabled = false
+		handle.Pulled.Transparency = 0
+		handle.Pulled.SurfaceGui.Enabled = true
+		Intake2 = true
+	else
+		handle.Transparency = 0
+		handle.SurfaceGui.Enabled = true
+		handle.Pulled.Transparency = 1
+		handle.Pulled.SurfaceGui.Enabled = false
+		Intake2 = false
+	end
+end)
+
